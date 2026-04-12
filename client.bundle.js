@@ -23467,11 +23467,28 @@ window.stopGame = () => {
   updateHomePanel();
 };
 ipcRenderer.on("launch-error", async (event, err) => {
+  isCurrentlyInstalling = false;
+  isGameRunning = false;
+  const overlay = document.getElementById("launch-overlay");
+  if (overlay) overlay.style.display = "none";
+  updateHomePanel();
   await showDialog({
     title: "CRITICAL FAILURE",
     message: "An error occurred before the game could start: " + err + "\n\nTry clearing your game libraries in Settings."
   });
-  document.getElementById("launch-overlay").style.display = "none";
+});
+ipcRenderer.on("game-started", () => {
+  isCurrentlyInstalling = false;
+  isGameRunning = true;
+  const overlay = document.getElementById("launch-overlay");
+  if (overlay) overlay.style.display = "none";
+  updateHomePanel();
+});
+ipcRenderer.on("game-exited", () => {
+  isGameRunning = false;
+  isCurrentlyInstalling = false;
+  updateHomePanel();
+  showToast("MISSION COMPLETED: GAME EXITED", "success");
 });
 document.getElementById("global-ram-slider").oninput = (e) => {
   const val = parseFloat(e.target.value).toFixed(1);
