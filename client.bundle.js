@@ -22635,6 +22635,8 @@ window.addEventListener("unhandledrejection", function(e) {
   } catch (err) {
   }
 });
+document.addEventListener("dragstart", (e) => e.preventDefault());
+document.addEventListener("drop", (e) => e.preventDefault());
 var skinview3d = (init_skinview3d(), __toCommonJS(skinview3d_exports));
 document.getElementById("min-btn").onclick = () => ipcRenderer.send("window-minimize");
 document.getElementById("max-btn").onclick = () => ipcRenderer.send("window-maximize");
