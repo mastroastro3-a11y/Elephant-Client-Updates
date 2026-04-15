@@ -3788,3 +3788,8 @@ input:checked + .slider-small:before { transform: translateX(16px); }
     letter-spacing: 0.03em;
 }
 
+
+/* Scroll Fixes */
+.modM-tab-content { overflow-y: auto; }
+#installed-mods-list, #modrinth-results { overflow-y: auto; padding-right: 8px; }
+

@@ -22763,7 +22763,11 @@ function initNavigationEvents() {
   });
 }
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initNavigationEvents);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initNavigationEvents);
+  } else {
+    initNavigationEvents();
+  }
 } else {
   initNavigationEvents();
 }
@@ -23257,17 +23261,25 @@ window.saveEditProfile = async () => {
   await ipcRenderer.invoke("save-profiles", profiles);
   loadData();
 };
-document.addEventListener("DOMContentLoaded", () => {
-  const tabs = document.querySelectorAll(".modal-tab");
+var initProfileTabs = () => {
+  const tabs = document.querySelectorAll(".modal-tab:not(.modM-tab-btn)");
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
       const parent = tab.closest(".modal-tabs");
-      parent.querySelectorAll(".modal-tab").forEach((t) => t.classList.remove("active"));
-      const contentParent = tab.closest(".advanced-modal").querySelector(".modal-body");
-      contentParent.querySelectorAll(".edit-tab-content").forEach((c) => c.classList.remove("active"));
+      if (parent) {
+        parent.querySelectorAll(".modal-tab").forEach((t) => t.classList.remove("active"));
+      }
+      const advModal = tab.closest(".advanced-modal");
+      if (advModal) {
+        const contentParent = advModal.querySelector(".modal-body");
+        if (contentParent) {
+          contentParent.querySelectorAll(".edit-tab-content").forEach((c) => c.classList.remove("active"));
+        }
+      }
       tab.classList.add("active");
       const targetId = tab.getAttribute("data-tab");
-      document.getElementById("tab-" + targetId).classList.add("active");
+      const targetEl = document.getElementById("tab-" + targetId);
+      if (targetEl) targetEl.classList.add("active");
     });
   });
   const editSlider = document.getElementById("edit-ram-slider");
@@ -23277,7 +23289,9 @@ document.addEventListener("DOMContentLoaded", () => {
       editVal.innerText = `${parseFloat(e.target.value).toFixed(1)}GB`;
     });
   }
-});
+};
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initProfileTabs);
+else initProfileTabs();
 window.selectBundledJava = () => {
   currentEditingJavaPath = null;
   document.getElementById("java-bundled-card").classList.add("active");
@@ -23579,7 +23593,7 @@ function renderAccountDropdown() {
   };
   dropdown.appendChild(manageBtn);
 }
-document.addEventListener("DOMContentLoaded", () => {
+var initUserPanel = () => {
   const userBtn = document.getElementById("user-panel-btn");
   const dropdown = document.getElementById("account-dropdown");
   if (userBtn && dropdown) {
@@ -23593,7 +23607,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-});
+};
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initUserPanel);
+else initUserPanel();
 window.selectAcc = (accName) => {
   activeAccount = accName;
   localStorage.setItem("activeAccount", accName);
@@ -23681,7 +23697,7 @@ window.closeModManager = () => {
   modal.classList.remove("active");
   setTimeout(() => modal.style.display = "none", 300);
 };
-document.addEventListener("DOMContentLoaded", () => {
+var initModTabs = () => {
   const modTabs = document.querySelectorAll(".modM-tab-btn");
   modTabs.forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -23695,7 +23711,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
-});
+};
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initModTabs);
+else initModTabs();
 async function updateModPanel() {
   loadInstalledMods();
 }
