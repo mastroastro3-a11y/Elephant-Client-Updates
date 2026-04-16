@@ -24245,10 +24245,10 @@ window.switchSkinTab = (type) => {
   const isSkin = type === "skin";
   document.getElementById("tab-skins").classList.toggle("active", isSkin);
   document.getElementById("tab-capes").classList.toggle("active", !isSkin);
-  const skinGrid = document.getElementById("skin-grid-container");
-  const capeGrid = document.getElementById("cape-grid-container");
-  if (skinGrid) skinGrid.style.display = isSkin ? "block" : "none";
-  if (capeGrid) capeGrid.style.display = isSkin ? "none" : "block";
+  const skinGrid = document.getElementById("skin-slots-grid");
+  const capeGrid = document.getElementById("cape-slots-grid");
+  if (skinGrid) skinGrid.style.display = isSkin ? "grid" : "none";
+  if (capeGrid) capeGrid.style.display = isSkin ? "none" : "grid";
   const desc = document.getElementById("tab-content-desc");
   desc.innerHTML = isSkin ? "Upload custom <strong>skins</strong> (64\xD764 PNG, max 10 KB). The active skin is visible to other players." : "Upload custom <strong>capes</strong> (64\xD732 PNG, max 10 KB). The active cape is visible to other players.";
   if (skinViewer) {
@@ -24317,36 +24317,39 @@ async function populateSlotImages() {
   if (!acc) return;
   if (!acc.skins) acc.skins = [null, null, null];
   if (!acc.capes) acc.capes = [null, null, null];
-  const type = document.getElementById("tab-skins").classList.contains("active") ? "skin" : "cape";
-  const assets = type === "skin" ? acc.skins : acc.capes;
-  const activeIdx = type === "skin" ? acc.activeSkinIndex || 0 : acc.activeCapeIndex || 0;
-  for (let i = 0; i < 3; i++) {
-    const slotNum = i + 1;
-    const prefix = type;
-    const slotCard = document.getElementById(`${prefix}-slot-${slotNum}`);
-    const slotImg = document.getElementById(`${prefix}-slot-img-${slotNum}`);
-    const useBtn = document.getElementById(`${prefix}-use-btn-${slotNum}`);
-    const replaceBtn = document.getElementById(`${prefix}-replace-btn-${slotNum}`);
-    const deleteBtn = document.getElementById(`${prefix}-delete-btn-${slotNum}`);
-    if (!slotCard) continue;
-    const isActive = i === activeIdx;
-    const hasAsset = !!assets[i];
-    slotCard.classList.toggle("active", isActive);
-    slotCard.classList.toggle("empty", !hasAsset);
-    slotCard.classList.toggle("has-image", hasAsset);
-    if (hasAsset) {
-      try {
-        const b64 = await ipcRenderer.invoke("get-asset-base64", assets[i]);
-        slotImg.src = b64 || "";
-      } catch (e) {
-        slotImg.src = "";
+  const types = ["skin", "cape"];
+  for (const type of types) {
+    const assets = type === "skin" ? acc.skins : acc.capes;
+    const activeIdx = type === "skin" ? acc.activeSkinIndex || 0 : acc.activeCapeIndex || 0;
+    for (let i = 0; i < 3; i++) {
+      const slotNum = i + 1;
+      const slotCard = document.getElementById(`${type}-slot-${slotNum}`);
+      const slotImg = document.getElementById(`${type}-slot-img-${slotNum}`);
+      const useBtn = document.getElementById(`${type}-use-btn-${slotNum}`);
+      const replaceBtn = document.getElementById(`${type}-replace-btn-${slotNum}`);
+      const deleteBtn = document.getElementById(`${type}-delete-btn-${slotNum}`);
+      const uploadOverlay = document.getElementById(`${type}-upload-overlay-${slotNum}`);
+      if (!slotCard) continue;
+      const isActive = i === activeIdx;
+      const hasAsset = !!assets[i];
+      slotCard.classList.toggle("active", isActive);
+      slotCard.classList.toggle("empty", !hasAsset);
+      slotCard.classList.toggle("has-image", hasAsset);
+      if (hasAsset) {
+        try {
+          const b64 = await ipcRenderer.invoke("get-asset-base64", assets[i]);
+          if (slotImg) slotImg.src = b64 || "";
+        } catch (e) {
+          if (slotImg) slotImg.src = "";
+        }
+      } else {
+        if (slotImg) slotImg.src = "";
       }
-    } else {
-      slotImg.src = "";
+      if (useBtn) useBtn.onclick = () => useAsset(type, i);
+      if (replaceBtn) replaceBtn.onclick = () => uploadSkin(type, slotNum);
+      if (deleteBtn) deleteBtn.onclick = () => deleteAsset(type, i);
+      if (uploadOverlay) uploadOverlay.onclick = () => uploadSkin(type, slotNum);
     }
-    useBtn.onclick = () => useAsset(type, i);
-    replaceBtn.onclick = () => uploadSkin(type, slotNum);
-    deleteBtn.onclick = () => deleteAsset(type, i);
   }
 }
 window.useAsset = async (type, idx) => {
@@ -24448,6 +24451,34 @@ This will remove temporary login data and skins. You may need to restart the cli
     showToast(`Cache cleared for ${accName.toUpperCase()}`, "success");
   }
 };
+window.equipCosmetic = async (name, type, btn) => {
+  if (!activeProfileId) {
+    return showDialog({ title: "Error", message: "Please select a profile first!" });
+  }
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" class="spin" style="margin-right:8px;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" stroke-dasharray="31.4" stroke-dashoffset="0"></circle></svg> EQUIPPING...';
+  try {
+    const result = await ipcRenderer.invoke("install-cosmetic", { name, type, profileId: activeProfileId });
+    if (result.success) {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:8px;"><polyline points="20 6 9 17 4 12"></polyline></svg> EQUIPPED \u2713';
+      btn.style.background = "#10b981";
+      showToast(`${name.toUpperCase()} EQUIPPED SUCCESSFULLY`, "success");
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.style.background = "";
+        btn.disabled = false;
+      }, 3e3);
+    } else {
+      throw new Error(result.error || "Unknown error");
+    }
+  } catch (e) {
+    console.error("Cosmetic Error:", e);
+    showDialog({ title: "Failed", message: `Could not equip cosmetic: ${e.message}` });
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+};
 Object.assign(window, {
   switchView,
   toggleVersionSelector,
@@ -24475,9 +24506,8 @@ Object.assign(window, {
     const modal = document.getElementById("skin-manager-overlay") || document.getElementById("skin-manager-modal");
     if (modal) modal.style.display = "none";
   },
-  switchSkinTab: (t) => {
-    if (typeof window.switchSkinTab === "function") window.switchSkinTab(t);
-  }
+  switchSkinTab: (t) => window.switchSkinTab(t),
+  equipCosmetic: window.equipCosmetic
 });
 /*! Bundled license information:
 

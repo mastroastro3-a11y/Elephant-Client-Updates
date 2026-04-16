@@ -3273,7 +3273,63 @@ input:checked + .slider-small:before { transform: translateX(16px); }
     color: #ff3e3e;
 }
 
-.slot-card.empty .slot-btn-use,
+.slot-empty-state {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.slot-empty-state svg {
+    width: 32px;
+    height: 32px;
+    color: var(--color-accent);
+    filter: drop-shadow(0 0 8px var(--color-accent-glow));
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.slot-empty-state span {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #fff;
+    opacity: 0.8;
+}
+
+.slot-empty-state:hover {
+    background: rgba(255, 62, 62, 0.1);
+}
+
+.slot-empty-state:hover svg {
+    transform: translateY(-5px) scale(1.1);
+}
+
+.slot-card.empty .slot-empty-state {
+    display: flex;
+}
+
+.slot-card.empty .slot-preview-box > svg {
+    display: none; /* Hide default placeholder icon when overlay is active */
+}
+
+/* Hide all buttons except upload overlay when empty */
+.slot-card.empty .slot-actions-group {
+    display: none;
+}
+
+.slot-card.empty .slot-badges-group {
+    opacity: 0.3;
+}
+
 .slot-card.active .slot-btn-use,
 .slot-card.empty .slot-btn-delete {
     display: none;
