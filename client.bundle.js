@@ -24245,6 +24245,10 @@ window.switchSkinTab = (type) => {
   const isSkin = type === "skin";
   document.getElementById("tab-skins").classList.toggle("active", isSkin);
   document.getElementById("tab-capes").classList.toggle("active", !isSkin);
+  const skinGrid = document.getElementById("skin-grid-container");
+  const capeGrid = document.getElementById("cape-grid-container");
+  if (skinGrid) skinGrid.style.display = isSkin ? "block" : "none";
+  if (capeGrid) capeGrid.style.display = isSkin ? "none" : "block";
   const desc = document.getElementById("tab-content-desc");
   desc.innerHTML = isSkin ? "Upload custom <strong>skins</strong> (64\xD764 PNG, max 10 KB). The active skin is visible to other players." : "Upload custom <strong>capes</strong> (64\xD732 PNG, max 10 KB). The active cape is visible to other players.";
   if (skinViewer) {
@@ -24318,11 +24322,13 @@ async function populateSlotImages() {
   const activeIdx = type === "skin" ? acc.activeSkinIndex || 0 : acc.activeCapeIndex || 0;
   for (let i = 0; i < 3; i++) {
     const slotNum = i + 1;
-    const slotCard = document.getElementById(`slot-${slotNum}`);
-    const slotImg = document.getElementById(`slot-img-${slotNum}`);
-    const useBtn = document.getElementById(`use-btn-${slotNum}`);
-    const replaceBtn = document.getElementById(`replace-btn-${slotNum}`);
-    const deleteBtn = document.getElementById(`delete-btn-${slotNum}`);
+    const prefix = type;
+    const slotCard = document.getElementById(`${prefix}-slot-${slotNum}`);
+    const slotImg = document.getElementById(`${prefix}-slot-img-${slotNum}`);
+    const useBtn = document.getElementById(`${prefix}-use-btn-${slotNum}`);
+    const replaceBtn = document.getElementById(`${prefix}-replace-btn-${slotNum}`);
+    const deleteBtn = document.getElementById(`${prefix}-delete-btn-${slotNum}`);
+    if (!slotCard) continue;
     const isActive = i === activeIdx;
     const hasAsset = !!assets[i];
     slotCard.classList.toggle("active", isActive);
@@ -24470,8 +24476,7 @@ Object.assign(window, {
     if (modal) modal.style.display = "none";
   },
   switchSkinTab: (t) => {
-    document.querySelectorAll(".skin-tab").forEach((el) => el.classList.remove("active"));
-    document.getElementById(`tab-${t}s`).classList.add("active");
+    if (typeof window.switchSkinTab === "function") window.switchSkinTab(t);
   }
 });
 /*! Bundled license information:
